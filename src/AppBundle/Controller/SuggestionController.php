@@ -149,30 +149,17 @@ class SuggestionController extends Controller
         $new_suggestion->setFileExtension($suggestion->getFileExtension());
         $new_suggestion->setFileMimeType($suggestion->getFileMimeType());
 
-        $form = $this->createForm(SuggestionType::class, $suggestion);
+        $form = $this->createForm(SuggestionType::class, $suggestion, ['method' => 'PATCH']);
         $form->handleRequest($request);
 
             if ($form->isSubmitted() && $form->isValid()) {
                 /** @var Suggestion $suggestion */
                 $status = $this->get('query_service')->findOneOrException(SuggestionStatus::class, ['id' => 1]);
 
-                if($suggestion->getUser() != $this->getUser()){
+                $suggestion->setUser($this->getUser());
+                $suggestion->setStatus($status);
 
-                    $new_suggestion->setDescription($form->getData()->getDescription());
-                    $new_suggestion->setCategory($suggestion->getCategory());
-                    $new_suggestion->setUser($this->getUser());
-                    $new_suggestion->setStatus($status);
-                    $em->persist($new_suggestion);
-                }else{
-                    $suggestion->setFile($suggestion->getFile());
-                    $suggestion->setFileExtension($suggestion->getFileExtension());
-                    $suggestion->setUser($this->getUser());
-                    $suggestion->setStatus($status);
-
-                    $em->persist($suggestion);
-                }
-
-
+                $em->persist($suggestion);
                 $em->flush();
             $this->addFlash('success', 'La modification a été bien enregistré');
             return $this->redirectToRoute('get_suggestion', ['id' => $suggestion->getId()]);
@@ -183,8 +170,9 @@ class SuggestionController extends Controller
 
     }
 
+
     /**
-     * @Route("/suggestions/1/test", name="twitter_callback")
+     * @Route("/suggestions/2/twitter", name="twitter_callback")
      *
      */
     public function postTweetWithoutMediaAction()
