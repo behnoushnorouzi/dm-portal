@@ -11,3 +11,8 @@ parameters:
     mailer_password: ~
 
     secret: ThisTokenIsNotSoSecretChangeIt
+    twitter_api_key: USejAWbXeTXDupznlmTeb1Dku
+    twitter_api_secret: ODgV2deK2p1zf7XVcjse1qmi7wH5ulnYLdvhczeN91GyZuFskI
+    twitter_api_access_token: 823098547-8WyHEKqOzM8i5M5gU6qmRBOBA3UUJfhzeYShnYLe
+    twitter_api_token_secret: 0yuXbg2AeiZfpCpNWbtLyxNIamJPYjJbs7wPtRKGH35qW
+    twitter_redirect_uri: twitter_callback
