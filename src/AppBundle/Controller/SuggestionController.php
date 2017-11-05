@@ -1,4 +1,5 @@
 <?php
+
 namespace AppBundle\Controller;
 
 use AppBundle\Entity\Suggestion;
@@ -7,6 +8,7 @@ use AppBundle\Form\Type\SuggestionType;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\Config\Definition\Exception\Exception;
+use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
@@ -47,7 +49,7 @@ class SuggestionController extends Controller
 
             /**@var \Symfony\Component\HttpFoundation\File\UploadedFile $file */
             $file = $suggestion->getFile();
-            if($file) {
+            if ($file) {
                 $fileName = password_hash(uniqid(rand(), true), PASSWORD_DEFAULT);
                 $extension = $file->guessExtension();
                 $mimeType = $file->getMimeType();
@@ -94,10 +96,10 @@ class SuggestionController extends Controller
 
         /** @var Suggestion $suggestion */
         $suggestion = $this->get('query_service')->findOneOrException(Suggestion::class, ['file' => $file]);
-        if (!$this->getUser()->isAdmin() && $suggestion->getUser() != $this->getUser() ) {
+        if (!$this->getUser()->isAdmin() && $suggestion->getUser() != $this->getUser()) {
             throw new \Exception('Permission denied');
         }
-        $filename = $suggestion->getFile().'.'.$suggestion->getFileExtension();
+        $filename = $suggestion->getFile() . '.' . $suggestion->getFileExtension();
 
         $response = new Response();
         $response->headers->set('Content-type', $suggestion->getFileMimeType());
@@ -129,45 +131,54 @@ class SuggestionController extends Controller
     }
 
     /**
+     * @param $id
      * @param Request $request
-     * @param Suggestion  $request
+     * @param Suggestion $suggestion
      * @Route("/suggestions/edit/{id}", name="admin_suggestion_edit")
      *
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @return Response
+     * @throws \Exception
      */
-    public function editSuggestionAction($id, Request $request, Suggestion $suggestion)
+    public function editSuggestionAction($id, Request $request, Suggestion $suggestion): Response
     {
-        $em = $this->getDoctrine()->getManager();
         $suggestion = $this->get('query_service')->findOneOrException(Suggestion::class, ['id' => $id]);
 
         if (!$this->getUser()->isAdmin() && $suggestion->getUser() != $this->getUser()) {
             throw new \Exception('Permission denied');
         }
 
-        $new_suggestion = new Suggestion();
-        $new_suggestion->setFile($suggestion->getFile());
-        $new_suggestion->setFileExtension($suggestion->getFileExtension());
-        $new_suggestion->setFileMimeType($suggestion->getFileMimeType());
+        $originalFile = $suggestion->getFile();
+        $originalFileExtension = $suggestion->getFileExtension();
 
-        $form = $this->createForm(SuggestionType::class, $suggestion, ['method' => 'PATCH']);
+        $form = $this->createForm(SuggestionType::class, $suggestion);
         $form->handleRequest($request);
 
-            if ($form->isSubmitted() && $form->isValid()) {
-                /** @var Suggestion $suggestion */
-                $status = $this->get('query_service')->findOneOrException(SuggestionStatus::class, ['id' => 1]);
+        if ($form->isSubmitted() && $form->isValid()) {
 
-                $suggestion->setUser($this->getUser());
-                $suggestion->setStatus($status);
+            $files = $request->files;
+            $uploadedFile = $files->get('appbundle_suggestion')['file'];
 
-                $em->persist($suggestion);
-                $em->flush();
+            if (count($uploadedFile) == 0) {
+                $suggestion->setFile($originalFile);
+                $suggestion->setFileExtension($originalFileExtension);
+            }
+
+            /** @var Suggestion $suggestion */
+            $status = $this->get('query_service')->findOneOrException(SuggestionStatus::class, ['id' => 1]);
+
+            $suggestion->setAdditionalDescription($suggestion->getAdditionalDescription());
+            $suggestion->setUser($this->getUser());
+            $suggestion->setStatus($status);
+
+            $em = $this->getDoctrine()->getManager();
+            $em->persist($suggestion);
+            $em->flush();
             $this->addFlash('success', 'La modification a été bien enregistré');
             return $this->redirectToRoute('get_suggestion', ['id' => $suggestion->getId()]);
         }
         return $this->render('AppBundle:Suggestion:edit_suggestion.html.twig', [
             "form" => $form->createView(),
         ]);
-
     }
 
 
@@ -177,9 +188,8 @@ class SuggestionController extends Controller
      */
     public function postTweetWithoutMediaAction()
     {
-       $a = $this->get('twitter_functions')->postTweetWithoutMedia();
-       dump($a);die;
+        $a = $this->get('twitter_functions')->postTweetWithoutMedia();
+        dump($a);
+        die;
     }
-
-
 }

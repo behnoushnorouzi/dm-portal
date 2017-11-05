@@ -87,6 +87,14 @@ class Suggestion
      * @Assert\NotNull()
      */
     private $category;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="additional_description", type="text", nullable=true)
+     */
+    private $additional_description;
+
     /**
      * Get id
      *
@@ -288,5 +296,28 @@ class Suggestion
     {
         return $this->category;
     }
-}
 
+    /**
+     * Set additionalDescription
+     *
+     * @param string $additionalDescription
+     *
+     * @return Suggestion
+     */
+    public function setAdditionalDescription($additionalDescription)
+    {
+        $this->additional_description = $additionalDescription;
+
+        return $this;
+    }
+
+    /**
+     * Get additionalDescription
+     *
+     * @return string
+     */
+    public function getAdditionalDescription()
+    {
+        return $this->additional_description;
+    }
+}

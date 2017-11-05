@@ -1,6 +1,6 @@
 {% extends 'AppBundle::base.html.twig' %}
 
-{% block title parent() ~ ' - ' ~ 'suggestion.number.title'|trans ~ suggestion.id%}
+{% block title parent() ~ ' - ' ~ 'suggestion.number.title'|trans ~ suggestion.id %}
 
 {% block nav %}
     <h2>{{ 'Suggestion' }}</h2>
@@ -33,6 +33,23 @@
                         </span>
                     </div>
                     {{ suggestion.description|escape|markdown }}
+                    <div class="b-r-xl">
+                    </div>
+                    <div class="feed-element">
+                        <a href="#" class="pull-left">
+                            <i class="fa fa-plus"></i>
+                        </a>
+                        <div class="media-body ">
+                            <strong>{{ 'suggestions.aditionaldesc.title'|trans }}</strong><br>
+                            <small class="text-muted">
+                                {% if suggestion.additionalDescription is defined and suggestion.additionalDescription is not null %}
+                                    {{ suggestion.additionalDescription }}
+                                {% elseif suggestion.additionalDescription is null %}
+                                    {{ 'suggestions.aditionaldesc.without'|trans }}
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
                     <div class="text-right">
                         {% if suggestion.status.id == 1 %}
                             <span class="label label-warning">{{ suggestion.status.label|trans }}</span>
@@ -51,7 +68,12 @@
                                 {{ 'suggestion.button.refuse'|trans }}
                             </a>
                         {% endif %}
+                        <a class="btn btn-default btn-sm" href="#">
+                            <i class="fa fa-twitter"></i>
+                            {{ 'suggestion.button.push'|trans }}
+                        </a>
                         {% if suggestion.file is not empty %}
+
                             <a class="btn btn-default btn-sm"
                                href="{{ path('get_suggestions_download',{'file':suggestion.file}) }}">
                                 <i class="fa fa-arrow-down" aria-hidden="true"></i>

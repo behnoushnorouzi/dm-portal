@@ -58,6 +58,12 @@
                                         <a class="btn btn-default btn-sm"
                                            href="{{ path('get_suggestion', {'id': suggestion.id}) }}">{{ 'suggestion.list.action.view'|trans }}</a>
                                     </td>
+                                    <td class="text-right col-xs-1">
+                                        <a class="btn btn-warning btn-sm"
+                                           href="{{ path('admin_suggestion_edit', {'id': suggestion.id}) }}">
+                                            <i class="fa fa-paste"></i> {{ 'suggestion.button.edit'|trans }}
+                                        </a>
+                                    </td>
                                 </tr>
                             {% endfor %}
                             </tbody>
