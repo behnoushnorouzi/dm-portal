@@ -16,4 +16,4 @@ services:
 
     twitter_functions:
       class: AppBundle\Services\TwitterFunctions
-      arguments: ['%twitter_api_key%', '%twitter_api_secret%','%twitter_api_access_token%','twitter_api_token_secret','%twitter_redirect_uri%', '@router', '@session']
+      arguments: ['%twitter_api_key%', '%twitter_api_secret%','%twitter_api_access_token%','%twitter_api_token_secret%']

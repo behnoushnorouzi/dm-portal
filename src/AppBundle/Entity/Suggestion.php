@@ -1,4 +1,5 @@
 <?php
+
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -82,6 +83,12 @@ class Suggestion
     private $status;
 
     /**
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\TwitterStatus")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $twitterStatus;
+
+    /**
      * @ORM\ManyToOne(targetEntity="AppBundle\Entity\SuggestionCategory", inversedBy="suggestions")
      * @ORM\JoinColumn(nullable=false)
      * @Assert\NotNull()
@@ -93,7 +100,7 @@ class Suggestion
      *
      * @ORM\Column(name="additional_description", type="text", nullable=true)
      */
-    private $additional_description;
+    private $additionalDescription;
 
     /**
      * Get id
@@ -304,9 +311,9 @@ class Suggestion
      *
      * @return Suggestion
      */
-    public function setAdditionalDescription($additionalDescription)
+    public function setAdditionalDescription($additionalDescription): Suggestion
     {
-        $this->additional_description = $additionalDescription;
+        $this->additionalDescription = $additionalDescription;
 
         return $this;
     }
@@ -318,6 +325,30 @@ class Suggestion
      */
     public function getAdditionalDescription()
     {
-        return $this->additional_description;
+        return $this->additionalDescription;
+    }
+
+    /**
+     * Set twitterStatus
+     *
+     * @param TwitterStatus $twitterStatus
+     *
+     * @return Suggestion
+     */
+    public function setTwitterStatus(TwitterStatus $twitterStatus): Suggestion
+    {
+        $this->twitterStatus = $twitterStatus;
+
+        return $this;
+    }
+
+    /**
+     * Get twitterStatus
+     *
+     * @return TwitterStatus
+     */
+    public function getTwitterStatus()
+    {
+        return $this->twitterStatus;
     }
 }

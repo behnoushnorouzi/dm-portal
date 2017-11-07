@@ -31,22 +31,12 @@
                 </div>
                 <div class="ibox-content">
                     {{ form_start(form) }}
-                    <div class="form-group">
-                        {{ form_errors(form.category) }}
-                        {{ form_widget(form.category, {'attr': {'class': 'form-control'}}) }}
-                    </div>
-                    <div class="form-group">
-                        {{ form_errors(form.description) }}
-                        {{ form_widget(form.description, {'attr': {'class': 'form-control',  'placeholder': 'entity.suggestion.description.placeholder'}}) }}
-                    </div>
+
                     <div class="form-group">
                         {{ form_errors(form.additionalDescription) }}
                         {{ form_widget(form.additionalDescription, {'attr': {'class': 'form-control', 'placeholder': 'Aditional description'}}) }}
                     </div>
-                    <div class="form-group" hidden>
-                        {{ form_errors(form.file) }}
-                        {{ form_widget(form.file, {'attr': {'class': 'form-control'}}) }}
-                    </div>
+
                     <button type="submit"
                             class="btn btn-primary block full-width m-b">{{ 'suggestions.add.action.submit'|trans }}</button>
                     {{ form_rest(form) }}

@@ -4,15 +4,16 @@ namespace AppBundle\Controller;
 
 use AppBundle\Entity\Suggestion;
 use AppBundle\Entity\SuggestionStatus;
+use AppBundle\Entity\TwitterStatus;
+use AppBundle\Form\Type\AdditionalDescriptionType;
 use AppBundle\Form\Type\SuggestionType;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\Config\Definition\Exception\Exception;
-use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use \Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class SuggestionController extends Controller
 {
@@ -40,17 +41,16 @@ class SuggestionController extends Controller
         $suggestion = new Suggestion();
 
         $form = $this->createForm(SuggestionType::class, $suggestion);
-
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            /** @var Suggestion $suggestion */
-            $status = $this->get('query_service')->findOneOrException(SuggestionStatus::class, ['id' => 1]);
 
-            /**@var \Symfony\Component\HttpFoundation\File\UploadedFile $file */
+            $status = $this->get('query_service')->findOneOrException(SuggestionStatus::class, ['id' => 1]);
+            $twitter_status = $this->get('query_service')->findOneOrException(TwitterStatus::class, ['id' => 1]);
+
             $file = $suggestion->getFile();
             if ($file) {
-                $fileName = password_hash(uniqid(rand(), true), PASSWORD_DEFAULT);
+                $fileName = md5(uniqid());
                 $extension = $file->guessExtension();
                 $mimeType = $file->getMimeType();
                 $file->move(
@@ -63,6 +63,7 @@ class SuggestionController extends Controller
             }
             $suggestion->setUser($this->getUser());
             $suggestion->setStatus($status);
+            $suggestion->setTwitterStatus($twitter_status);
             $em = $this->getDoctrine()->getManager();
             $em->persist($suggestion);
             $em->flush();
@@ -96,9 +97,11 @@ class SuggestionController extends Controller
 
         /** @var Suggestion $suggestion */
         $suggestion = $this->get('query_service')->findOneOrException(Suggestion::class, ['file' => $file]);
-        if (!$this->getUser()->isAdmin() && $suggestion->getUser() != $this->getUser()) {
-            throw new \Exception('Permission denied');
+
+        if (!$suggestion) {
+            $this->suggestionNotFound();
         }
+
         $filename = $suggestion->getFile() . '.' . $suggestion->getFileExtension();
 
         $response = new Response();
@@ -123,6 +126,10 @@ class SuggestionController extends Controller
     {
         $this->get('role_service')->adminOrException();
         $suggestion = $this->get('query_service')->findOneOrException(Suggestion::class, ['id' => $id]);
+
+        if (!$suggestion) {
+            $this->suggestionNotFound();
+        }
         $suggestionstatus = $this->get('query_service')->findOneOrException(SuggestionStatus::class, ['id' => $statusId]);
         $suggestion->setStatus($suggestionstatus);
         $this->get('query_service')->save($suggestion);
@@ -143,37 +150,24 @@ class SuggestionController extends Controller
     {
         $suggestion = $this->get('query_service')->findOneOrException(Suggestion::class, ['id' => $id]);
 
-        if (!$this->getUser()->isAdmin() && $suggestion->getUser() != $this->getUser()) {
-            throw new \Exception('Permission denied');
+        if (!$suggestion) {
+            $this->suggestionNotFound();
         }
 
-        $originalFile = $suggestion->getFile();
-        $originalFileExtension = $suggestion->getFileExtension();
-
-        $form = $this->createForm(SuggestionType::class, $suggestion);
+        $form = $this->createForm(AdditionalDescriptionType::class, $suggestion);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
 
-            $files = $request->files;
-            $uploadedFile = $files->get('appbundle_suggestion')['file'];
-
-            if (count($uploadedFile) == 0) {
-                $suggestion->setFile($originalFile);
-                $suggestion->setFileExtension($originalFileExtension);
-            }
-
-            /** @var Suggestion $suggestion */
-            $status = $this->get('query_service')->findOneOrException(SuggestionStatus::class, ['id' => 1]);
+            $this->get('role_service')->adminOrException();
 
             $suggestion->setAdditionalDescription($suggestion->getAdditionalDescription());
             $suggestion->setUser($this->getUser());
-            $suggestion->setStatus($status);
 
             $em = $this->getDoctrine()->getManager();
             $em->persist($suggestion);
             $em->flush();
-            $this->addFlash('success', 'La modification a été bien enregistré');
+
             return $this->redirectToRoute('get_suggestion', ['id' => $suggestion->getId()]);
         }
         return $this->render('AppBundle:Suggestion:edit_suggestion.html.twig', [
@@ -181,15 +175,80 @@ class SuggestionController extends Controller
         ]);
     }
 
+    public function postTwitterStatusAction($id, $statusId)
+    {
+
+        $suggestion = $this->get('query_service')->findOneOrException(Suggestion::class, ['id' => $id]);
+        $twitterstatus = $this->get('query_service')->findOneOrException(TwitterStatus::class, ['id' => $statusId]);
+
+        if (!$suggestion) {
+            return $this->suggestionNotFound();
+        }
+
+        if (!$twitterstatus) {
+            return $this->twitterstatusNotFound();
+        }
+
+
+        $suggestion->setTwitterStatus($twitterstatus);
+        $this->get('query_service')->save($suggestion);
+
+        return $this->redirectToRoute('get_suggestion', ['id' => $id]);
+    }
 
     /**
-     * @Route("/suggestions/2/twitter", name="twitter_callback")
-     *
+     * @Route("/suggestions/tweet_with_media/{id}/status/{statusId}", name="tweet_withMedia"),  requirements={
+     *      "statusId": "2"
+     * @Method({"GET"})
      */
-    public function postTweetWithoutMediaAction()
+    public function postTweetWithMediaAction($id, $statusId): RedirectResponse
     {
-        $a = $this->get('twitter_functions')->postTweetWithoutMedia();
-        dump($a);
-        die;
+        $this->get('role_service')->adminOrException();
+        $suggestion = $this->get('query_service')->findOneOrException(Suggestion::class, ['id' => $id]);
+
+        if (!$suggestion) {
+            $this->suggestionNotFound();
+        }
+
+        $file = $suggestion->getFile() .'.'. $suggestion->getFileExtension();
+
+        //to make sure that the additional description exists
+        if ($suggestion->getAdditionalDescription() != null) {
+
+            $tweet = $suggestion->getAdditionalDescription();
+
+        } else {
+
+            $tweet = $suggestion->getDescription();
+        }
+
+        // To select the right method (with media OR without media)
+        if ($suggestion->getFile() != null) {
+
+            $media = $this->getParameter('suggestion_directory') . '/' . $file;
+            $this->get('twitter_functions')->postTweetWithMedia($tweet, $media);
+
+        } else {
+
+            $this->get('twitter_functions')->postTweetWithoutMedia($tweet);
+        }
+
+        return $this->postTwitterStatusAction($id, $statusId);
+    }
+
+    /**
+     * @return NotFoundHttpException
+     */
+    private function suggestionNotFound(): NotFoundHttpException
+    {
+        throw new NotFoundHttpException('Suggestion is not found!');
+    }
+
+    /**
+     * @return NotFoundHttpException
+     */
+    private function twitterstatusNotFound(): NotFoundHttpException
+    {
+        throw new NotFoundHttpException('Twitter Status is not found!');
     }
 }
