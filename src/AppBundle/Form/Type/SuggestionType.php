@@ -20,7 +20,6 @@ class SuggestionType extends AbstractType
     {
         $builder
             ->add('description')
-            ->add('additionalDescription')
             ->add('file', FileType::class, array(
                 'label' => 'Fichier',
                 'required' => false,
@@ -49,6 +48,4 @@ class SuggestionType extends AbstractType
     {
         return 'appbundle_suggestion';
     }
-
-
 }

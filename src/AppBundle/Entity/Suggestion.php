@@ -2,6 +2,7 @@
 
 namespace AppBundle\Entity;
 
+use AppBundle\Form\Type\UserType;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -107,7 +108,7 @@ class Suggestion
      *
      * @return int
      */
-    public function getId()
+    public function getId(): int
     {
         return $this->id;
     }
@@ -129,9 +130,9 @@ class Suggestion
     /**
      * Get description
      *
-     * @return string
+     * @return  string|null
      */
-    public function getDescription()
+    public function getDescription(): ?string
     {
         return $this->description;
     }
@@ -139,9 +140,9 @@ class Suggestion
     /**
      * Get file
      *
-     * @return string
+     * @return string|null
      */
-    public function getFile()
+    public function getFile(): ?string
     {
         return $this->file;
     }
@@ -163,9 +164,9 @@ class Suggestion
     /**
      * Get file extension
      *
-     * @return string
+     * @return string|null
      */
-    public function getFileExtension()
+    public function getFileExtension(): ?string
     {
         return $this->fileExtension;
     }
@@ -187,9 +188,9 @@ class Suggestion
     /**
      * Get file mime type
      *
-     * @return string
+     * @return string|null
      */
-    public function getFileMimeType()
+    public function getFileMimeType(): ?string
     {
         return $this->fileMimeType;
     }
@@ -249,9 +250,9 @@ class Suggestion
     /**
      * Get User
      *
-     * @return \AppBundle\Entity\User
+     * @return User
      */
-    public function getUser()
+    public function getUser(): User
     {
         return $this->user;
     }
@@ -259,7 +260,7 @@ class Suggestion
     /**
      * Set status
      *
-     * @param \AppBundle\Entity\SuggestionStatus $status
+     * @param SuggestionStatus $status
      *
      * @return Suggestion
      */
@@ -273,9 +274,9 @@ class Suggestion
     /**
      * Get status
      *
-     * @return \AppBundle\Entity\SuggestionStatus
+     * @return SuggestionStatus
      */
-    public function getStatus()
+    public function getStatus(): SuggestionStatus
     {
         return $this->status;
     }
@@ -283,7 +284,7 @@ class Suggestion
     /**
      * Set category
      *
-     * @param \AppBundle\Entity\SuggestionCategory $category
+     * @param SuggestionCategory $category
      *
      * @return Suggestion
      */
@@ -297,9 +298,9 @@ class Suggestion
     /**
      * Get category
      *
-     * @return \AppBundle\Entity\SuggestionCategory
+     * @return SuggestionCategory
      */
-    public function getCategory()
+    public function getCategory(): SuggestionCategory
     {
         return $this->category;
     }
@@ -321,9 +322,9 @@ class Suggestion
     /**
      * Get additionalDescription
      *
-     * @return string
+     * @return string|null
      */
-    public function getAdditionalDescription()
+    public function getAdditionalDescription(): ?string
     {
         return $this->additionalDescription;
     }
@@ -347,7 +348,7 @@ class Suggestion
      *
      * @return TwitterStatus
      */
-    public function getTwitterStatus()
+    public function getTwitterStatus(): TwitterStatus
     {
         return $this->twitterStatus;
     }

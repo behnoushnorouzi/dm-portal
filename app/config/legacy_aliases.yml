@@ -1,0 +1,5 @@
+services:
+    query_service: '@AppBundle\Services\QueryService'
+    role_service: '@AppBundle\Services\RoleService'
+    twitter_functions: '@AppBundle\Services\TwitterFunctions'
+

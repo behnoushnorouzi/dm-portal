@@ -7,6 +7,9 @@ use AppBundle\Entity\SuggestionStatus;
 use AppBundle\Entity\TwitterStatus;
 use AppBundle\Form\Type\AdditionalDescriptionType;
 use AppBundle\Form\Type\SuggestionType;
+use AppBundle\Services\QueryService;
+use AppBundle\Services\RoleService;
+use AppBundle\Services\TwitterFunctions;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,6 +20,16 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class SuggestionController extends Controller
 {
+    private $queryServices;
+    private $twitterFunctions;
+    private $roleService;
+
+    public function __construct(QueryService $queryServices, TwitterFunctions $twitterFunctions, RoleService $roleService)
+    {
+        $this->queryServices = $queryServices;
+        $this->twitterFunctions = $twitterFunctions;
+        $this->roleService = $roleService;
+    }
 
     /**
      * @Route("/suggestions", name="get_suggestions")
@@ -45,12 +58,12 @@ class SuggestionController extends Controller
 
         if ($form->isSubmitted() && $form->isValid()) {
 
-            $status = $this->get('query_service')->findOneOrException(SuggestionStatus::class, ['id' => 1]);
-            $twitter_status = $this->get('query_service')->findOneOrException(TwitterStatus::class, ['id' => 1]);
+            $status = $this->queryServices->findOneOrException(SuggestionStatus::class, ['id' => 1]);
+            $twitter_status = $this->queryServices->findOneOrException(TwitterStatus::class, ['id' => 1]);
 
             $file = $suggestion->getFile();
             if ($file) {
-                $fileName = md5(uniqid());
+                $fileName = md5(uniqid(rand(), true));
                 $extension = $file->guessExtension();
                 $mimeType = $file->getMimeType();
                 $file->move(
@@ -82,7 +95,7 @@ class SuggestionController extends Controller
     public function getSuggestionAction($id): Response
     {
         /** @var Suggestion $suggestion */
-        $suggestion = $this->get('query_service')->findOneOrException(Suggestion::class, ['id' => $id]);
+        $suggestion = $this->queryServices->findOneOrException(Suggestion::class, ['id' => $id]);
 
         return $this->render('AppBundle:Suggestion:get_suggestion.html.twig', ['suggestion' => $suggestion]);
     }
@@ -94,13 +107,8 @@ class SuggestionController extends Controller
      */
     public function getSuggestionsDownloadAction($file)
     {
-
         /** @var Suggestion $suggestion */
-        $suggestion = $this->get('query_service')->findOneOrException(Suggestion::class, ['file' => $file]);
-
-        if (!$suggestion) {
-            $this->suggestionNotFound();
-        }
+        $suggestion = $this->queryServices->findOneOrException(Suggestion::class, ['file' => $file]);
 
         $filename = $suggestion->getFile() . '.' . $suggestion->getFileExtension();
 
@@ -124,15 +132,12 @@ class SuggestionController extends Controller
      */
     public function getSuggestionsMarkAsAction($id, $statusId)
     {
-        $this->get('role_service')->adminOrException();
-        $suggestion = $this->get('query_service')->findOneOrException(Suggestion::class, ['id' => $id]);
+        $this->roleService->adminOrException();
+        $suggestion = $this->queryServices->findOneOrException(Suggestion::class, ['id' => $id]);
+        $suggestionstatus = $this->queryServices->findOneOrException(SuggestionStatus::class, ['id' => $statusId]);
 
-        if (!$suggestion) {
-            $this->suggestionNotFound();
-        }
-        $suggestionstatus = $this->get('query_service')->findOneOrException(SuggestionStatus::class, ['id' => $statusId]);
         $suggestion->setStatus($suggestionstatus);
-        $this->get('query_service')->save($suggestion);
+        $this->queryServices->save($suggestion);
 
         return $this->redirectToRoute('get_suggestion', ['id' => $id]);
     }
@@ -148,22 +153,16 @@ class SuggestionController extends Controller
      */
     public function editSuggestionAction($id, Request $request, Suggestion $suggestion): Response
     {
-        $suggestion = $this->get('query_service')->findOneOrException(Suggestion::class, ['id' => $id]);
-
-        if (!$suggestion) {
-            $this->suggestionNotFound();
-        }
+        $this->roleService->adminOrException();
+        $suggestion = $this->queryServices->findOneOrException(Suggestion::class, ['id' => $id]);
 
         $form = $this->createForm(AdditionalDescriptionType::class, $suggestion);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
 
-            $this->get('role_service')->adminOrException();
-
             $suggestion->setAdditionalDescription($suggestion->getAdditionalDescription());
             $suggestion->setUser($this->getUser());
-
             $em = $this->getDoctrine()->getManager();
             $em->persist($suggestion);
             $em->flush();
@@ -175,42 +174,37 @@ class SuggestionController extends Controller
         ]);
     }
 
-    public function postTwitterStatusAction($id, $statusId)
+    /**
+     * @param $id
+     * @param $statusId
+     * @return RedirectResponse
+     */
+    public function postTwitterStatusAction($id, $statusId): RedirectResponse
     {
-
-        $suggestion = $this->get('query_service')->findOneOrException(Suggestion::class, ['id' => $id]);
-        $twitterstatus = $this->get('query_service')->findOneOrException(TwitterStatus::class, ['id' => $statusId]);
-
-        if (!$suggestion) {
-            return $this->suggestionNotFound();
-        }
-
-        if (!$twitterstatus) {
-            return $this->twitterstatusNotFound();
-        }
-
+        $suggestion = $this->queryServices->findOneOrException(Suggestion::class, ['id' => $id]);
+        $twitterstatus = $this->queryServices->findOneOrException(TwitterStatus::class, ['id' => $statusId]);
 
         $suggestion->setTwitterStatus($twitterstatus);
-        $this->get('query_service')->save($suggestion);
+        $this->queryServices->save($suggestion);
 
         return $this->redirectToRoute('get_suggestion', ['id' => $id]);
     }
 
     /**
+     * @param $id
+     * @param $statusId
      * @Route("/suggestions/tweet_with_media/{id}/status/{statusId}", name="tweet_withMedia"),  requirements={
      *      "statusId": "2"
      * @Method({"GET"})
+     *
+     * @return RedirectResponse
      */
     public function postTweetWithMediaAction($id, $statusId): RedirectResponse
     {
-        $this->get('role_service')->adminOrException();
-        $suggestion = $this->get('query_service')->findOneOrException(Suggestion::class, ['id' => $id]);
+        $this->roleService->adminOrException();
+        $suggestion = $this->queryServices->findOneOrException(Suggestion::class, ['id' => $id]);
 
-        if (!$suggestion) {
-            $this->suggestionNotFound();
-        }
-
-        $file = $suggestion->getFile() .'.'. $suggestion->getFileExtension();
+        $file = $suggestion->getFile() . '.' . $suggestion->getFileExtension();
 
         //to make sure that the additional description exists
         if ($suggestion->getAdditionalDescription() != null) {
@@ -226,29 +220,13 @@ class SuggestionController extends Controller
         if ($suggestion->getFile() != null) {
 
             $media = $this->getParameter('suggestion_directory') . '/' . $file;
-            $this->get('twitter_functions')->postTweetWithMedia($tweet, $media);
+            $this->twitterFunctions->postTweetWithMedia($tweet, $media);
 
         } else {
 
-            $this->get('twitter_functions')->postTweetWithoutMedia($tweet);
+            $this->twitterFunctions->postTweetWithoutMedia($tweet);
         }
 
         return $this->postTwitterStatusAction($id, $statusId);
-    }
-
-    /**
-     * @return NotFoundHttpException
-     */
-    private function suggestionNotFound(): NotFoundHttpException
-    {
-        throw new NotFoundHttpException('Suggestion is not found!');
-    }
-
-    /**
-     * @return NotFoundHttpException
-     */
-    private function twitterstatusNotFound(): NotFoundHttpException
-    {
-        throw new NotFoundHttpException('Twitter Status is not found!');
     }
 }
