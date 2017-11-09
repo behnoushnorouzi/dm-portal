@@ -16,8 +16,15 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class SuggestionCategoryController extends Controller
 {
 
+    /**
+     * @var RoleService
+     */
     private $roleService;
 
+    /**
+     * SuggestionCategoryController constructor.
+     * @param RoleService $roleService
+     */
     public function __construct(RoleService $roleService)
     {
         $this->roleService = $roleService;
