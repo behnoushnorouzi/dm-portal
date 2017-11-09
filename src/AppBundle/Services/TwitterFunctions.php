@@ -12,21 +12,20 @@ class TwitterFunctions
     private $token_secret;
     private $oauth;
 
+
     /**
      * TwitterFunctions constructor.
      * @param $consumer_key
      * @param $consumer_secret
      * @param $access_token
      * @param $token_secret
-     * @param $oauth
      */
-    public function __construct($consumer_key, $consumer_secret, $access_token, $token_secret, $oauth)
+    public function __construct($consumer_key, $consumer_secret, $access_token, $token_secret)
     {
         $this->consumer_key = $consumer_key;
         $this->consumer_secret = $consumer_secret;
         $this->access_token = $access_token;
         $this->token_secret = $token_secret;
-        $this->oauth = $oauth;
 
         $this->oauth = new TwitterOAuth($this->consumer_key, $this->consumer_secret, $this->access_token, $this->token_secret);
     }
@@ -35,7 +34,7 @@ class TwitterFunctions
      * @param $tweet
      * @return array|object
      */
-    public function postTweetWithoutMedia($tweet): array
+    public function postTweetWithoutMedia($tweet)
     {
         return $this->oauth->post('statuses/update', ['status' => $tweet]);
     }
@@ -45,7 +44,7 @@ class TwitterFunctions
      * @param $media
      * @return array|object
      */
-    public function postTweetWithMedia($tweet, $media): array
+    public function postTweetWithMedia($tweet, $media)
     {
         $file = $this->oauth->upload('media/upload', ['media' => $media]);
 

@@ -140,9 +140,9 @@ class Suggestion
     /**
      * Get file
      *
-     * @return string|null
+     * @return string
      */
-    public function getFile(): ?string
+    public function getFile()
     {
         return $this->file;
     }
@@ -164,9 +164,9 @@ class Suggestion
     /**
      * Get file extension
      *
-     * @return string|null
+     * @return string
      */
-    public function getFileExtension(): ?string
+    public function getFileExtension()
     {
         return $this->fileExtension;
     }
@@ -178,7 +178,7 @@ class Suggestion
      *
      * @return Suggestion
      */
-    public function setFileMimeType($mimeType): Suggestion
+    public function setFileMimeType($mimeType)
     {
         $this->mimeType = $mimeType;
 
@@ -188,9 +188,9 @@ class Suggestion
     /**
      * Get file mime type
      *
-     * @return string|null
+     * @return string
      */
-    public function getFileMimeType(): ?string
+    public function getFileMimeType()
     {
         return $this->fileMimeType;
     }
@@ -202,7 +202,7 @@ class Suggestion
      *
      * @return Suggestion
      */
-    public function setFileExtension($fileExtension): Suggestion
+    public function setFileExtension($fileExtension)
     {
         $this->fileExtension = $fileExtension;
 
@@ -298,9 +298,9 @@ class Suggestion
     /**
      * Get category
      *
-     * @return SuggestionCategory
+     * @return SuggestionCategory|null
      */
-    public function getCategory(): SuggestionCategory
+    public function getCategory(): ?SuggestionCategory
     {
         return $this->category;
     }

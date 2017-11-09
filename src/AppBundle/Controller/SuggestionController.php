@@ -20,10 +20,27 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class SuggestionController extends Controller
 {
+    /**
+     * @var QueryService
+     */
     private $queryServices;
+
+    /**
+     * @var TwitterFunctions
+     */
     private $twitterFunctions;
+
+    /**
+     * @var RoleService
+     */
     private $roleService;
 
+    /**
+     * SuggestionController constructor.
+     * @param QueryService $queryServices
+     * @param TwitterFunctions $twitterFunctions
+     * @param RoleService $roleService
+     */
     public function __construct(QueryService $queryServices, TwitterFunctions $twitterFunctions, RoleService $roleService)
     {
         $this->queryServices = $queryServices;
@@ -58,7 +75,10 @@ class SuggestionController extends Controller
 
         if ($form->isSubmitted() && $form->isValid()) {
 
+            /** @var Suggestion $suggestion */
             $status = $this->queryServices->findOneOrException(SuggestionStatus::class, ['id' => 1]);
+
+            /** @var Suggestion $suggestoin */
             $twitter_status = $this->queryServices->findOneOrException(TwitterStatus::class, ['id' => 1]);
 
             $file = $suggestion->getFile();
@@ -154,6 +174,7 @@ class SuggestionController extends Controller
     public function editSuggestionAction($id, Request $request, Suggestion $suggestion): Response
     {
         $this->roleService->adminOrException();
+        /** @var Suggestion $suggestion */
         $suggestion = $this->queryServices->findOneOrException(Suggestion::class, ['id' => $id]);
 
         $form = $this->createForm(AdditionalDescriptionType::class, $suggestion);
@@ -181,7 +202,9 @@ class SuggestionController extends Controller
      */
     public function postTwitterStatusAction($id, $statusId): RedirectResponse
     {
+        /** @var Suggestion $suggestion */
         $suggestion = $this->queryServices->findOneOrException(Suggestion::class, ['id' => $id]);
+        /** @var Suggestion $suggestion */
         $twitterstatus = $this->queryServices->findOneOrException(TwitterStatus::class, ['id' => $statusId]);
 
         $suggestion->setTwitterStatus($twitterstatus);
@@ -202,6 +225,7 @@ class SuggestionController extends Controller
     public function postTweetWithMediaAction($id, $statusId): RedirectResponse
     {
         $this->roleService->adminOrException();
+        /** @var Suggestion $suggestion */
         $suggestion = $this->queryServices->findOneOrException(Suggestion::class, ['id' => $id]);
 
         $file = $suggestion->getFile() . '.' . $suggestion->getFileExtension();

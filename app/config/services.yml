@@ -1,6 +1,3 @@
-imports:
-    - { resource: legacy_aliases.yml}
-
 parameters:
 
 services:
@@ -24,6 +21,8 @@ services:
 
     twig.extension.text:
        class: Twig_Extensions_Extension_Text
+       tags:
+            - { name: twig.extension }
 
     AppBundle\Services\QueryService:
       arguments: ["@service_container"]
