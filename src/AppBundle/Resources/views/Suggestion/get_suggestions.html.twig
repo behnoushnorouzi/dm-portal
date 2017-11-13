@@ -35,6 +35,9 @@
                                         {% if suggestion.twitterStatus.id == 2 %}
                                             <i class="fa fa-twitter" style="color: #1da1f2"></i>
                                         {% endif %}
+                                        {% if suggestion.facebookStatus.id == 2 %}
+                                            <i class="fa fa-facebook" style="color: #4267b2"></i>
+                                        {% endif %}
                                         {% if suggestion.status.id == 1 %}
                                             <span class="label label-warning">{{ suggestion.status.label|trans }}</span>
                                         {% elseif suggestion.status.id == 2 %}

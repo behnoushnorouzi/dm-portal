@@ -54,6 +54,9 @@
                         {% if suggestion.twitterStatus.id == 2 %}
                             <i class="fa fa-twitter" style="color: #1da1f2"></i>
                         {% endif %}
+                        {% if suggestion.facebookStatus.id == 2 %}
+                            <i class="fa fa-facebook" style="color: #4267b2"></i>
+                        {% endif %}
                         {% if suggestion.status.id == 1 %}
                             <span class="label label-warning">{{ suggestion.status.label|trans }}</span>
                         {% elseif suggestion.status.id == 2 %}
@@ -81,6 +84,19 @@
                             {% else %}
                                 <a class="btn btn-default btn-sm" href="#" disabled="">
                                     <i class="fa fa-twitter" style="color: #1da1f2">
+                                        {{ 'suggestion.status.pushed'|trans }}
+                                    </i>
+                                </a>
+                            {% endif %}
+                            {% if suggestion.facebookStatus.id == 1 %}
+                                <a class="btn btn-default btn-sm"
+                                   href="{{ path('facebook_message', {'id': suggestion.id, 'statusId': 2}) }}">
+                                    <i class="fa fa-facebook"></i>
+                                    {{ 'suggestion.button.push'|trans }}
+                                </a>
+                            {% else %}
+                                <a class="btn btn-default btn-sm" href="#" disabled="">
+                                    <i class="fa fa-facebook" style="color: #4267b2">
                                         {{ 'suggestion.status.pushed'|trans }}
                                     </i>
                                 </a>

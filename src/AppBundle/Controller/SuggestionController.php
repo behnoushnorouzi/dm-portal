@@ -2,11 +2,13 @@
 
 namespace AppBundle\Controller;
 
+use AppBundle\Entity\FacebookStatus;
 use AppBundle\Entity\Suggestion;
 use AppBundle\Entity\SuggestionStatus;
 use AppBundle\Entity\TwitterStatus;
 use AppBundle\Form\Type\AdditionalDescriptionType;
 use AppBundle\Form\Type\SuggestionType;
+use AppBundle\Services\FacebookFunctions;
 use AppBundle\Services\QueryService;
 use AppBundle\Services\RoleService;
 use AppBundle\Services\TwitterFunctions;
@@ -36,16 +38,23 @@ class SuggestionController extends Controller
     private $roleService;
 
     /**
+     * @var FacebookFunctions
+     */
+    private $facebookFunctions;
+
+    /**
      * SuggestionController constructor.
      * @param QueryService $queryServices
      * @param TwitterFunctions $twitterFunctions
      * @param RoleService $roleService
+     * @param FacebookFunctions $facebookFunctions
      */
-    public function __construct(QueryService $queryServices, TwitterFunctions $twitterFunctions, RoleService $roleService)
+    public function __construct(QueryService $queryServices, TwitterFunctions $twitterFunctions, RoleService $roleService, FacebookFunctions $facebookFunctions)
     {
         $this->queryServices = $queryServices;
         $this->twitterFunctions = $twitterFunctions;
         $this->roleService = $roleService;
+        $this->facebookFunctions = $facebookFunctions;
     }
 
     /**
@@ -81,6 +90,9 @@ class SuggestionController extends Controller
             /** @var Suggestion $suggestoin */
             $twitter_status = $this->queryServices->findOneOrException(TwitterStatus::class, ['id' => 1]);
 
+            /** @var Suggestion $suggestoin */
+            $facebook_status = $this->queryServices->findOneOrException(FacebookStatus::class, ['id' => 1]);
+
             $file = $suggestion->getFile();
             if ($file) {
                 $fileName = md5(uniqid(rand(), true));
@@ -97,6 +109,8 @@ class SuggestionController extends Controller
             $suggestion->setUser($this->getUser());
             $suggestion->setStatus($status);
             $suggestion->setTwitterStatus($twitter_status);
+            $suggestion->setFacebookStatus($facebook_status);
+
             $em = $this->getDoctrine()->getManager();
             $em->persist($suggestion);
             $em->flush();
@@ -252,5 +266,87 @@ class SuggestionController extends Controller
         }
 
         return $this->postTwitterStatusAction($id, $statusId);
+    }
+
+    /**
+     * @Route("/suggestions/facebook/login", name="facebook_login")
+     * @return RedirectResponse
+     */
+    public function getFacebookLoginAction(): RedirectResponse
+    {
+        return $this->redirect($this->facebookFunctions->getFacebookLogin());
+    }
+
+    /**
+     * @Route("/suggestions/facebook/callback", name="facebook_callback")
+     * @param Request $request
+     *
+     * @return RedirectResponse
+     */
+    public function callbackAction(Request $request): RedirectResponse
+    {
+        $this->facebookFunctions->FacebookCallback();
+
+        return $this->redirectToRoute('get_suggestions');
+
+    }
+
+    /**
+     * @param $id
+     * @param $statusId
+     * @return RedirectResponse
+     */
+    public function postFacebookStatusAction($id, $statusId): RedirectResponse
+    {
+        /** @var Suggestion $suggestion */
+        $suggestion = $this->queryServices->findOneOrException(Suggestion::class, ['id' => $id]);
+        /** @var Suggestion $suggestion */
+        $facebookstatus = $this->queryServices->findOneOrException(FacebookStatus::class, ['id' => $statusId]);
+
+        $suggestion->setFacebookStatus($facebookstatus);
+        $this->queryServices->save($suggestion);
+
+        return $this->redirectToRoute('get_suggestion', ['id' => $id]);
+    }
+
+    /**
+     * @param $id
+     * @param $statusId
+     * @Route("/suggestions/facebook/{id}/status/{statusId}", name="facebook_message"),  requirements={
+     *      "statusId": "2"
+     * @Method({"GET"})
+     *
+     * @return RedirectResponse
+     */
+    public function postMessageOnFacebookAction($id, $statusId)
+    {
+        $this->roleService->adminOrException();
+        /** @var Suggestion $suggestion */
+        $suggestion = $this->queryServices->findOneOrException(Suggestion::class, ['id' => $id]);
+
+        $file = $suggestion->getFile() . '.' . $suggestion->getFileExtension();
+
+        //to make sure that the additional description exists
+        if ($suggestion->getAdditionalDescription() != null) {
+
+            $message = $suggestion->getAdditionalDescription();
+
+        } else {
+
+            $message = $suggestion->getDescription();
+        }
+
+        // To select the right method (with media OR without media)
+        if ($suggestion->getFile() != null) {
+
+            $media = $this->getParameter('suggestion_directory') . '/' . $file;
+            $this->facebookFunctions->postMessageOnFacebookWithMedia($message, $media);
+
+        } else {
+
+            $this->facebookFunctions->postMessageOnFacebookWithLink($message);
+        }
+
+        return $this->postFacebookStatusAction($id, $statusId);
     }
 }
