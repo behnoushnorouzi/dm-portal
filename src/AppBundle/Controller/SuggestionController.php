@@ -42,6 +42,9 @@ class SuggestionController extends Controller
      */
     private $facebookFunctions;
 
+    const DEFAULT_STATUS = 1;
+    const PUBLISHED_STATUS = 2;
+
     /**
      * SuggestionController constructor.
      * @param QueryService $queryServices
@@ -90,8 +93,8 @@ class SuggestionController extends Controller
             /** @var Suggestion $suggestoin */
             $twitter_status = $this->queryServices->findOneOrException(TwitterStatus::class, ['id' => 1]);
 
-            /** @var Suggestion $suggestoin */
-            $facebook_status = $this->queryServices->findOneOrException(FacebookStatus::class, ['id' => 1]);
+            /** @var FacebookStatus $facebookStatus */
+            $facebookStatus = $this->queryServices->findOneOrException(FacebookStatus::class, ['id' => self::DEFAULT_STATUS]);
 
             $file = $suggestion->getFile();
             if ($file) {
@@ -109,7 +112,7 @@ class SuggestionController extends Controller
             $suggestion->setUser($this->getUser());
             $suggestion->setStatus($status);
             $suggestion->setTwitterStatus($twitter_status);
-            $suggestion->setFacebookStatus($facebook_status);
+            $suggestion->setFacebookStatus($facebookStatus);
 
             $em = $this->getDoctrine()->getManager();
             $em->persist($suggestion);
@@ -287,23 +290,22 @@ class SuggestionController extends Controller
     {
         $this->facebookFunctions->FacebookCallback();
 
-        return $this->redirectToRoute('get_suggestions');
+        return $this->redirectToRoute('get_suggestion');
 
     }
 
     /**
      * @param $id
-     * @param $statusId
      * @return RedirectResponse
      */
-    public function postFacebookStatusAction($id, $statusId): RedirectResponse
+    public function postFacebookStatusAction($id): RedirectResponse
     {
         /** @var Suggestion $suggestion */
         $suggestion = $this->queryServices->findOneOrException(Suggestion::class, ['id' => $id]);
-        /** @var Suggestion $suggestion */
-        $facebookstatus = $this->queryServices->findOneOrException(FacebookStatus::class, ['id' => $statusId]);
+        /** @var FacebookStatus $facebookStatus */
+        $facebookStatus = $this->queryServices->findOneOrException(FacebookStatus::class, ['id' => self::PUBLISHED_STATUS]);
 
-        $suggestion->setFacebookStatus($facebookstatus);
+        $suggestion->setFacebookStatus($facebookStatus);
         $this->queryServices->save($suggestion);
 
         return $this->redirectToRoute('get_suggestion', ['id' => $id]);
@@ -311,14 +313,12 @@ class SuggestionController extends Controller
 
     /**
      * @param $id
-     * @param $statusId
-     * @Route("/suggestions/facebook/{id}/status/{statusId}", name="facebook_message"),  requirements={
-     *      "statusId": "2"
+     * @Route("/suggestions/facebook/{id}", name="facebook_message")
      * @Method({"GET"})
      *
      * @return RedirectResponse
      */
-    public function postMessageOnFacebookAction($id, $statusId)
+    public function postMessageOnFacebookAction($id)
     {
         $this->roleService->adminOrException();
         /** @var Suggestion $suggestion */
@@ -347,6 +347,6 @@ class SuggestionController extends Controller
             $this->facebookFunctions->postMessageOnFacebookWithLink($message);
         }
 
-        return $this->postFacebookStatusAction($id, $statusId);
+        return $this->postFacebookStatusAction($id, self::PUBLISHED_STATUS);
     }
 }

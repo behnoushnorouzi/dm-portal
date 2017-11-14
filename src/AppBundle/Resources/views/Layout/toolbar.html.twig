@@ -7,13 +7,6 @@
             <li>
                 <a href="{{ path('sign_out') }}"><i class="fa fa-sign-out"></i> {{ 'layout.action.signout'|trans }}</a>
             </li>
-            {% if app.session.get('sessionToken') is null%}
-            <li>
-                <a href="{{ path('facebook_login' ) }}" style="border-left: 1px solid #e9e9e9"> <i class="fa fa-facebook"></i>
-                    {{ 'suggestion.facebook.status.login'|trans }}
-                </a>
-            </li>
-            {% endif %}
         </ul>
     </nav>
 </div>

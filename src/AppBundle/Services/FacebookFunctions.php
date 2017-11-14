@@ -6,6 +6,7 @@ namespace AppBundle\Services;
 use Facebook\Exceptions\FacebookResponseException;
 use Facebook\Exceptions\FacebookSDKException;
 use Facebook\Facebook;
+use Facebook\FacebookResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -52,7 +53,7 @@ class FacebookFunctions
     /**
      * @return string
      */
-    public function getFacebookLogin()
+    public function getFacebookLogin(): string
     {
         $permission[] = self::WRITE_PERMISSION;
         $callback = $this->router->generate($this->redirectUrl, array(), UrlGeneratorInterface::ABSOLUTE_URL);

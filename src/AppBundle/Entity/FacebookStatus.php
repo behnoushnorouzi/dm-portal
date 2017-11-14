@@ -26,7 +26,10 @@ class FacebookStatus
      *
      * @ORM\Column(name="status", type="string", length=100)
      */
-    private $status = 1;
+    private $status = self::DEFAULT_STATUS;
+
+
+    const DEFAULT_STATUS = 1;
 
 
     /**
