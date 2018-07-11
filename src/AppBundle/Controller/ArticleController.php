@@ -3,12 +3,15 @@
 namespace AppBundle\Controller;
 
 use AppBundle\Entity\ArticleVote;
+use AppBundle\Event\DmPortalEvents;
+use AppBundle\Event\EmailNotificationEvent;
 use AppBundle\Form\Type\ArticleType;
 use AppBundle\Entity\Article;
 use AppBundle\Form\Type\ArticleVoteType;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -37,7 +40,7 @@ class ArticleController extends Controller
      * @param Request $request
      * @return Response
      */
-    public function postArticlesAction(Request $request): Response
+    public function postArticlesAction(Request $request, EventDispatcher $dispatcher): Response
     {
         $article = new Article();
         $form = $this->createForm(ArticleType::class, $article);
@@ -52,7 +55,8 @@ class ArticleController extends Controller
             $em->persist($article);
             $em->flush();
 
-            $this->sendMailNewArticle($article);
+            $event = new EmailNotificationEvent($article);
+            $dispatcher->dispatch(DmPortalEvents::EMAIL_NOTIFICATION, $event);
 
             return $this->redirectToRoute('get_articles');
         }
