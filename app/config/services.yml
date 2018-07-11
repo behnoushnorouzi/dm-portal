@@ -10,7 +10,7 @@ services:
         resource: '../../src/AppBundle/*'
         # you can exclude directories or files
         # but if a service is unused, it's removed anyway
-        exclude: '../../src/AppBundle/{Entity,Repository,Tests}'
+        exclude: '../../src/AppBundle/{Entity,Tests}'
 
     # controllers are imported separately to make sure they're public
     # and have a tag that allows actions to type-hint services
@@ -19,16 +19,28 @@ services:
         public: true
         tags: ['controller.service_arguments']
 
+    AppBundle\Repository\:
+        resource: '../../src/AppBundle/Repository'
+
     twig.extension.text:
        class: Twig_Extensions_Extension_Text
        tags:
             - { name: twig.extension }
+
+    app.user_repository:
+      class: Doctrine\ORM\EntityRepository
+      factory: ['@doctrine.orm.default_entity_manager', getRepository]
+      arguments:
+        - AppBundle\Entity\User
 
     AppBundle\Services\QueryService:
       arguments: ["@service_container"]
 
     AppBundle\Services\RoleService:
       arguments: ["@service_container"]
+
+    AppBundle\Services\EmailNotification:
+      arguments: ['@swiftmailer.mailer','@AppBundle\Repository\UserRepository', '@translator.default', '@templating.engine.twig', '@security.token_storage']
 
     AppBundle\Services\TwitterFunctions:
       arguments: ['%twitter_api_key%', '%twitter_api_secret%','%twitter_api_access_token%','%twitter_api_token_secret%', '@doctrine.orm.entity_manager','%kernel.project_dir%/uploads/suggestion','@AppBundle\Services\QueryService']

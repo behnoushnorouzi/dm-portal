@@ -3,12 +3,17 @@
 namespace AppBundle\Controller;
 
 use AppBundle\Entity\ArticleVote;
+use AppBundle\Event\ArticleMailStatusEvent;
+use AppBundle\Event\ArticleVotedEvent;
+use AppBundle\Event\DmPortalEvents;
+use AppBundle\Event\ArticleSubmittedEvent;
 use AppBundle\Form\Type\ArticleType;
 use AppBundle\Entity\Article;
 use AppBundle\Form\Type\ArticleVoteType;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -16,6 +21,13 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ArticleController extends Controller
 {
+    private $dispatcher;
+
+    public function __construct(EventDispatcher $dispatcher)
+    {
+        $this->dispatcher = $dispatcher;
+    }
+
     /**
      * @Route("/articles", name="get_articles")
      * @Method({"GET"})
@@ -52,7 +64,8 @@ class ArticleController extends Controller
             $em->persist($article);
             $em->flush();
 
-            $this->sendMailNewArticle($article);
+            $event = new ArticleSubmittedEvent($article);
+            $this->dispatcher->dispatch(DmPortalEvents::ARTICLE_SUBMITTED, $event);
 
             return $this->redirectToRoute('get_articles');
         }
@@ -128,7 +141,8 @@ class ArticleController extends Controller
                 $em->persist($articleVote);
                 $em->flush();
 
-                $this->sendMailVoteArticle($articleVote);
+                $event = new ArticleVotedEvent($articleVote,$article);
+                $this->dispatcher->dispatch(DmPortalEvents::ARTICLE_VOTED, $event);
 
                 return $this->redirectToRoute('get_article', [
                     'id' => $article->getId()
@@ -189,7 +203,8 @@ class ArticleController extends Controller
                 $em->merge($article);
                 $em->flush();
 
-                $this->sendMailStatusArticle($article);
+                $event = new ArticleMailStatusEvent($article);
+                $this->dispatcher->dispatch(DmPortalEvents::ARTICLE_MAIL_STATUS, $event);
 
                 return $this->redirectToRoute('get_article', [
                     'id' => $article->getId()
@@ -201,68 +216,6 @@ class ArticleController extends Controller
             'article' => $article,
             'myVote' => $myVote
         ]);
-    }
-
-    private function sendMailNewArticle(Article $article)
-    {
-        $users = $this->getDoctrine()->getRepository('AppBundle:User')
-            ->findModerators();
-
-        foreach ($users as $user) {
-            $message = (new \Swift_Message())
-                ->setSubject($this->get('translator')->trans('email.new-article.title'))
-                ->setFrom('no-reply@darkmira.com', 'Darkmira')
-                ->setTo($user->getEmail())
-                ->setBody(
-                    $this->get('templating')->render('@App/Email/new_article.html.twig', [
-                        'article' => $article
-                    ]),
-                    'text/html'
-                );
-            $this->get('mailer')->send($message);
-        }
-    }
-
-    private function sendMailVoteArticle(ArticleVote $vote)
-    {
-        $users = $this->getDoctrine()->getRepository('AppBundle:User')
-            ->findModerators();
-
-        foreach ($users as $user) {
-            $message = (new \Swift_Message())
-                ->setSubject($this->get('translator')->trans('email.vote-article.title'))
-                ->setFrom('no-reply@darkmira.com', 'Darkmira')
-                ->setTo($user->getEmail())
-                ->setBody(
-                    $this->get('templating')->render('@App/Email/vote_article.html.twig', [
-                        'article' => $vote->getArticle(),
-                        'vote' => $vote
-                    ]),
-                    'text/html'
-                );
-            $this->get('mailer')->send($message);
-        }
-    }
-
-    private function sendMailStatusArticle(Article $article)
-    {
-        $users = $this->getDoctrine()->getRepository('AppBundle:User')
-            ->findModerators();
-        $users[] = $this->getUser();
-
-        foreach ($users as $user) {
-            $message = (new \Swift_Message())
-                ->setSubject($this->get('translator')->trans('email.status-article.title'))
-                ->setFrom('no-reply@darkmira.com', 'Darkmira')
-                ->setTo($user->getEmail())
-                ->setBody(
-                    $this->get('templating')->render('@App/Email/status_article.html.twig', [
-                        'article' => $article
-                    ]),
-                    'text/html'
-                );
-            $this->get('mailer')->send($message);
-        }
     }
 
     /**
