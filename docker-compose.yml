@@ -1,34 +1,36 @@
-version: "3.1"
+version: "3"
 
 services:
 
     web:
-        build: .
-        environment:
-            SYMFONY_ENV: dev
+        image: webdevops/php-nginx-dev:7.1
         container_name: dm-portal-web
         volumes:
-            - .:/var/www/html
+            - ./:/app
+        working_dir: /app
+        depends_on:
+            - database
+        environment:
+            WEB_DOCUMENT_ROOT: /app/web
+            WEB_DOCUMENT_INDEX: app_dev.php
+            PHP_DATE_TIMEZONE: "UTC"
+            PHP_DISPLAY_ERRORS: 1
+            SYMFONY_ENV: dev
+        ports:
+            - 8081:80
 
     database:
         image: mariadb:10.3
         container_name: dm-portal-database
         environment:
-            - MYSQL_ROOT_PASSWORD=dm-portal
-            - MYSQL_DATABASE=dm-portal
-            - MYSQL_USER=dm-portal
-            - MYSQL_PASSWORD=dm-portal
-
-    composer:
-        restart: 'no'
-        image: composer
-        command: install
-        volumes:
-            - .:/app
+            MYSQL_ROOT_PASSWORD: dm-portal
+            MYSQL_DATABASE: mydatabase
 
     phpmyadmin:
         image: phpmyadmin/phpmyadmin
         container_name: dm-portal-phpmyadmin
+        depends_on:
+            - database
         ports:
             - 8080:80
         environment:
