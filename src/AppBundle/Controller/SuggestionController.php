@@ -3,12 +3,14 @@
 namespace AppBundle\Controller;
 
 use AppBundle\Entity\FacebookStatus;
+use AppBundle\Entity\LinkedinStatus;
 use AppBundle\Entity\Suggestion;
 use AppBundle\Entity\SuggestionStatus;
 use AppBundle\Entity\TwitterStatus;
 use AppBundle\Form\Type\AdditionalDescriptionType;
 use AppBundle\Form\Type\SuggestionType;
 use AppBundle\Services\FacebookFunctions;
+use AppBundle\Services\LinkedinFunctions;
 use AppBundle\Services\QueryService;
 use AppBundle\Services\RoleService;
 use AppBundle\Services\TwitterFunctions;
@@ -18,7 +20,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use \Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class SuggestionController extends Controller
 {
@@ -42,6 +43,11 @@ class SuggestionController extends Controller
      */
     private $facebookFunctions;
 
+    /**
+     * @var LinkedinFunctions
+     */
+    private $linkedinFunctions;
+
     const DEFAULT_STATUS = 1;
     const PUBLISHED_STATUS = 2;
 
@@ -51,13 +57,15 @@ class SuggestionController extends Controller
      * @param TwitterFunctions $twitterFunctions
      * @param RoleService $roleService
      * @param FacebookFunctions $facebookFunctions
+     * @param LinkedinFunctions $linkedinFunctions
      */
-    public function __construct(QueryService $queryServices, TwitterFunctions $twitterFunctions, RoleService $roleService, FacebookFunctions $facebookFunctions)
+    public function __construct(QueryService $queryServices, TwitterFunctions $twitterFunctions, RoleService $roleService, FacebookFunctions $facebookFunctions, LinkedinFunctions $linkedinFunctions)
     {
         $this->queryServices = $queryServices;
         $this->twitterFunctions = $twitterFunctions;
         $this->roleService = $roleService;
         $this->facebookFunctions = $facebookFunctions;
+        $this->linkedinFunctions = $linkedinFunctions;
     }
 
     /**
@@ -87,11 +95,14 @@ class SuggestionController extends Controller
 
         if ($form->isSubmitted() && $form->isValid()) {
 
-            /** @var Suggestion $suggestion */
+            /** @var SuggestionStatus $status */
             $status = $this->queryServices->findOneOrException(SuggestionStatus::class, ['id' => 1]);
 
-            /** @var Suggestion $suggestoin */
-            $twitter_status = $this->queryServices->findOneOrException(TwitterStatus::class, ['id' => 1]);
+            /** @var TwitterStatus $twitterStatus */
+            $twitterStatus = $this->queryServices->findOneOrException(TwitterStatus::class, ['id' => 1]);
+
+            /** @var LinkedinStatus $linkedinStatus */
+            $linkedinStatus = $this->queryServices->findOneOrException(LinkedinStatus::class, ['idLinkedIn' => 1]);
 
             /** @var FacebookStatus $facebookStatus */
             $facebookStatus = $this->queryServices->findOneOrException(FacebookStatus::class, ['id' => self::DEFAULT_STATUS]);
@@ -111,8 +122,9 @@ class SuggestionController extends Controller
             }
             $suggestion->setUser($this->getUser());
             $suggestion->setStatus($status);
-            $suggestion->setTwitterStatus($twitter_status);
+            $suggestion->setTwitterStatus($twitterStatus);
             $suggestion->setFacebookStatus($facebookStatus);
+            $suggestion->setLinkedinStatus($linkedinStatus);
 
             $em = $this->getDoctrine()->getManager();
             $em->persist($suggestion);
@@ -286,11 +298,11 @@ class SuggestionController extends Controller
      *
      * @return RedirectResponse
      */
-    public function callbackAction(Request $request): RedirectResponse
+    public function callbackAction(): RedirectResponse
     {
         $this->facebookFunctions->FacebookCallback();
 
-        return $this->redirectToRoute('get_suggestion');
+        return $this->redirectToRoute('get_suggestions');
 
     }
 
@@ -347,6 +359,73 @@ class SuggestionController extends Controller
             $this->facebookFunctions->postMessageOnFacebookWithLink($message);
         }
 
-        return $this->postFacebookStatusAction($id, self::PUBLISHED_STATUS);
+        return $this->postFacebookStatusAction($id);
+    }
+
+    /**
+     * @Route("/suggestions/linkedin/login", name="linkedin_login")
+     *
+     * @return RedirectResponse
+     */
+    public function getLinkedinLoginAction(): RedirectResponse
+    {
+        return $this->redirect($this->linkedinFunctions->getLinkedinLogin());
+    }
+
+    /**
+     * @Route("/suggestions/linkedin/callback", name="linkedin_callback")
+     * @param Request $request
+     *
+     * @return RedirectResponse
+     */
+    public function linkedinCallbackAction(): RedirectResponse
+    {
+        $this->linkedinFunctions->LinkedinCallback();
+
+        return $this->redirectToRoute('get_suggestions');
+    }
+
+    /**
+     * @param string $idSuggestion
+     * @return RedirectResponse
+     */
+    public function postLinkedinStatusAction(string $idSuggestion): RedirectResponse
+    {
+        /** @var Suggestion $suggestion */
+        $suggestion = $this->queryServices->findOneOrException(Suggestion::class, ['id' => $idSuggestion]);
+
+        /** @var LinkedinStatus $linkedinStatus **/
+        $linkedinStatus = $this->queryServices->findOneOrException(LinkedinStatus::class, ['idLinkedIn' => self::PUBLISHED_STATUS]);
+
+        $suggestion->setLinkedinStatus($linkedinStatus);
+        $this->queryServices->save($suggestion);
+
+        return $this->redirectToRoute('get_suggestion', ['id' => $idSuggestion]);
+    }
+
+    /**
+     * @param string $idSuggestion
+     * @Route("/suggestions/linkedin/{idSuggestion}", name="linkedin_message")
+     * @Method({"GET"})
+     *
+     * @return RedirectResponse
+     */
+    public function postMessageOnLinkedinAction(string $idSuggestion)
+    {
+        $this->roleService->adminOrException();
+        /** @var Suggestion $suggestion */
+        $suggestion = $this->queryServices->findOneOrException(Suggestion::class, ['id' => $idSuggestion]);
+
+        $file = $suggestion->getFile() . '.' . $suggestion->getFileExtension();
+
+        $message = $suggestion->getDescription();
+
+        if ($suggestion->getAdditionalDescription() !== null) {
+            $message = $suggestion->getAdditionalDescription();
+        }
+
+        $this->linkedinFunctions->postMessageOnLinkedin($message,  $this->getParameter('suggestion_directory') . '/' . $file);
+
+        return $this->postLinkedinStatusAction($idSuggestion);
     }
 }

@@ -19,6 +19,8 @@ class AppKernel extends Kernel
             new Knp\Bundle\MarkdownBundle\KnpMarkdownBundle(),
             new Ornicar\GravatarBundle\OrnicarGravatarBundle(),
             new AppBundle\AppBundle(),
+            new Happyr\LinkedInBundle\HappyrLinkedInBundle(),
+            new Http\HttplugBundle\HttplugBundle(),
         ];
 
         if (in_array($this->getEnvironment(), ['dev', 'test'], true)) {

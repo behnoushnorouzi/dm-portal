@@ -7,7 +7,7 @@ imports:
 # http://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
     locale: fr
-    suggestion_directory: '%kernel.project_dir%/uploads/suggestion'
+    suggestion_directory: '%kernel.project_dir%/web/img/uploads/suggestion'
 framework:
     #esi: ~
     #translator: { fallbacks: ['%locale%'] }
@@ -75,4 +75,10 @@ ornicar_gravatar:
     size: 40
     default: mm
 
-
+happyr_linkedin:
+  app_id: '%linkedin_api_id%'
+  app_secret: '%linkedin_api_secret%'
+  request_format: '%linkedin_request_format%' # Default
+  response_format: '%linkedin_response_format%' # Default
+  http_client: 'httplug.client' # Service ID for an object implementing Http\Client\HttpClient
+  http_message_factory: 'httplug.message_factory' # Service ID for an object implementing Http\Message\MessageFactory

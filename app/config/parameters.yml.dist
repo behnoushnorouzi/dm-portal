@@ -18,3 +18,10 @@ parameters:
     facebook_api_key: ~
     facebook_api_secret: ~
     facebook_callback: facebook_callback
+    linkedin_api_id: ~
+    linkedin_api_secret: ~
+    linkedin_company_id: ~
+    linkedin_request_format: json
+    linkedin_response_format: array
+    linkedin_callback: linkedin_callback
+    dm-portal-domain-prod: https://www.dm-portal.com/

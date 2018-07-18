@@ -35,3 +35,6 @@ services:
 
     AppBundle\Services\FacebookFunctions:
       arguments: ['%facebook_api_key%','%facebook_api_secret%', '%facebook_callback%', '@router', '@session']
+
+    AppBundle\Services\LinkedinFunctions:
+      arguments: ['%linkedin_api_id%','%linkedin_api_secret%','%linkedin_company_id%','%linkedin_callback%','@router', '@session', '%dm-portal-domain-prod%', '@translator.default']

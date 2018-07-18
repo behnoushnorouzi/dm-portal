@@ -1,0 +1,8 @@
+model: AppBundle\Entity\LinkedinStatus
+fixtures:
+    linkedin_status_pending:
+        idLinkedIn: 1
+        status: linkedin.status.pending
+    linkedin_status_pushed:
+        idLinkedIn: 2
+        status: linkedin.status.pushed

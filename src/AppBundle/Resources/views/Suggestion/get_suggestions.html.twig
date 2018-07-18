@@ -38,6 +38,9 @@
                                         {% if suggestion.facebookStatus.id == 2 %}
                                             <i class="fa fa-facebook published-facebook" ></i>
                                         {% endif %}
+                                        {% if suggestion.linkedinStatus.idLinkedIn == 2 %}
+                                            <i class="fa fa-linkedin published-linkedin" ></i>
+                                        {% endif %}
                                         {% if suggestion.status.id == 1 %}
                                             <span class="label label-warning">{{ suggestion.status.label|trans }}</span>
                                         {% elseif suggestion.status.id == 2 %}
@@ -71,12 +74,12 @@
                                                 <i class="fa fa-pencil-square-o"></i>
                                             </a>
                                         </td>
-                                        <td class="text-right col-xs-1">
-                                            <a class="btn btn-white btn-bitbucket"
-                                               href="{{ path('admin_suggestion_autopush', {'id': suggestion.id}) }}">
-                                                <i class="fa fa-clock-o"></i>
-                                            </a>
-                                        </td>
+                                        {#<td class="text-right col-xs-1">#}
+                                            {#<a class="btn btn-white btn-bitbucket"#}
+                                               {#href="{{ path('admin_suggestion_autopush', {'id': suggestion.id}) }}">#}
+                                                {#<i class="fa fa-clock-o"></i>#}
+                                            {#</a>#}
+                                        {#</td>#}
                                     {% endif %}
                                 </tr>
                             {% endfor %}

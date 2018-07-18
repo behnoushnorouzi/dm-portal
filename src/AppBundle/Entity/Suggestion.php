@@ -103,6 +103,12 @@ class Suggestion
     private $facebookStatus;
 
     /**
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\LinkedinStatus")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $linkedinStatus;
+
+    /**
      * @ORM\ManyToOne(targetEntity="AppBundle\Entity\SuggestionCategory", inversedBy="suggestions")
      * @ORM\JoinColumn(nullable=false)
      * @Assert\NotNull()
@@ -389,6 +395,30 @@ class Suggestion
     public function getFacebookStatus(): FacebookStatus
     {
         return $this->facebookStatus;
+    }
+
+    /**
+     * Set linkedinStatus
+     *
+     * @param LinkedinStatus $linkedinStatus
+     *
+     * @return Suggestion
+     */
+    public function setLinkedinStatus(LinkedinStatus $linkedinStatus): Suggestion
+    {
+        $this->linkedinStatus = $linkedinStatus;
+
+        return $this;
+    }
+
+    /**
+     * Get linkedinStatus
+     *
+     * @return LinkedinStatus
+     */
+    public function getlinkedinStatus(): LinkedinStatus
+    {
+        return $this->linkedinStatus;
     }
 
     /**
