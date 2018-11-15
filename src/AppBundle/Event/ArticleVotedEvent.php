@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace AppBundle\Event;
 
@@ -6,7 +6,7 @@ use AppBundle\Entity\Article;
 use AppBundle\Entity\ArticleVote;
 use Symfony\Component\EventDispatcher\Event;
 
-class ArticleVotedEvent extends Event
+final class ArticleVotedEvent extends Event
 {
     private $vote;
     private $article;

@@ -1,10 +1,11 @@
-<?php
+<?php declare(strict_types=1);
+
 namespace AppBundle\Event;
 
 use AppBundle\Entity\Article;
 use Symfony\Component\EventDispatcher\Event;
 
-class ArticleMailStatusEvent extends Event
+final class ArticleMailStatusEvent extends Event
 {
     private $article;
 
